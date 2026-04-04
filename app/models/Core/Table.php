@@ -1,6 +1,6 @@
 <?php
 
-require_once "Database.php";
+require_once 'app/models/Core/Database.php';
 
 class Model_Core_Table
 {
@@ -10,7 +10,7 @@ class Model_Core_Table
     protected $data = [];
     protected $adapter = null;
 
-    public function  __construct() {}
+    public function __construct() {}
 
     public function setTableName($tablename)
     {
@@ -31,10 +31,12 @@ class Model_Core_Table
     {
         return $this->_primarykey;
     }
+
     public function setAdapter($adapter)
     {
         $this->adapter = $adapter;
     }
+
     public function getAdapter()
     {
         if (!$this->adapter) {
@@ -44,7 +46,6 @@ class Model_Core_Table
         return $this->adapter;
     }
 
-
     public function __set($key, $value)
     {
         $this->data[$key] = $value;
@@ -52,18 +53,99 @@ class Model_Core_Table
 
     public function __get($key)
     {
-        return $this->data[$key];
+        if (array_key_exists($key, $this->data)) {
+            return $this->data[$key];
+        }
+        return null;
     }
 
+    // Load a single record by primary key
+    public function load($id)
+    {
+        $table = $this->getTableName();
+        $primaryKey = $this->getPrimaryKey();
+        $id = $this->getAdapter()->escape($id);
+        $sql = "SELECT * FROM `$table` WHERE `$primaryKey` = '$id'";
+        $row = $this->getAdapter()->fetchRow($sql);
 
+        if ($row) {
+            $this->data = $row;
+        }
+        return $this;
+    }
+
+    // Fetch all records
+    public function fetchAll()
+    {
+        $table = $this->getTableName();
+        $sql = "SELECT * FROM `$table`";
+        $rows = $this->getAdapter()->fetchAll($sql);
+        return $rows ? $rows : [];
+    }
+
+    // Insert a new record
     public function insert()
     {
-        $keys = array_keys($this->data);
-        $columns = implode(", ", $keys);
-        $values = implode("', '", array_values($this->data));
+        $data = $this->data;
+        // Remove primary key if empty (auto-increment)
+        $primaryKey = $this->getPrimaryKey();
+        if (array_key_exists($primaryKey, $data) && empty($data[$primaryKey])) {
+            unset($data[$primaryKey]);
+        }
 
-        $sql = "INSERT INTO $this->_tablename ($columns) VALUES ('$values')";
+        $keys = array_keys($data);
+        $columns = implode("`, `", $keys);
+        
+        $values = [];
+        foreach ($data as $value) {
+            $values[] = $this->getAdapter()->escape($value);
+        }
+        $valuesStr = implode("', '", $values);
+
+        $table = $this->getTableName();
+        $sql = "INSERT INTO `$table` (`$columns`) VALUES ('$valuesStr')";
 
         return $this->getAdapter()->insert($sql);
+    }
+
+    // Update an existing record
+    public function update()
+    {
+        $data = $this->data;
+        $primaryKey = $this->getPrimaryKey();
+        $id = $this->getAdapter()->escape($data[$primaryKey]);
+        unset($data[$primaryKey]);
+
+        $setParts = [];
+        foreach ($data as $key => $value) {
+            $escaped = $this->getAdapter()->escape($value);
+            $setParts[] = "`$key` = '$escaped'";
+        }
+        $setStr = implode(", ", $setParts);
+
+        $table = $this->getTableName();
+        $sql = "UPDATE `$table` SET $setStr WHERE `$primaryKey` = '$id'";
+
+        return $this->getAdapter()->update($sql);
+    }
+
+    // Save – insert or update based on primary key presence
+    public function save()
+    {
+        $primaryKey = $this->getPrimaryKey();
+        if (!empty($this->data[$primaryKey])) {
+            return $this->update();
+        }
+        return $this->insert();
+    }
+
+    // Delete a record by primary key
+    public function delete($id)
+    {
+        $table = $this->getTableName();
+        $primaryKey = $this->getPrimaryKey();
+        $id = $this->getAdapter()->escape($id);
+        $sql = "DELETE FROM `$table` WHERE `$primaryKey` = '$id'";
+        return $this->getAdapter()->delete($sql);
     }
 }

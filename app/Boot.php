@@ -1,21 +1,31 @@
 <?php
-require_once 'app/controllers/Core/Front.php';
-require_once 'app/models/Request.php';
-require_once 'app/controllers/Product.php';
+require_once 'app/models/Core/Request.php';
 
 class Boot
 {
     public static function init()
     {
-        echo 222;
-
         $request = new Model_Request();
 
-        $controllerName = $request->get('c', 'index');
-        $controllerName = 'Controller_' . ucfirst($controllerName);
-        $controller = new $controllerName();
+        $controllerName = $request->get('c', 'product');
+        
+        // Build controller file path: app/controllers/{Ucfirst}.php
+        $controllerFile = 'app/controllers/' . ucfirst($controllerName) . '.php';
+        
+        if (!file_exists($controllerFile)) {
+            die("Controller file not found: " . $controllerFile);
+        }
+
+        require_once $controllerFile;
+
+        // Build controller class name: Controller_{Ucfirst}
+        $controllerClass = 'Controller_' . ucfirst($controllerName);
+
+        if (!class_exists($controllerClass)) {
+            die("Controller class not found: " . $controllerClass);
+        }
+
+        $controller = new $controllerClass();
         $controller->dispatch();
-        // $product = new Product();
-        // $product->dispatch();
     }
 }

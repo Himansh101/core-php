@@ -1,7 +1,7 @@
 <?php
 require_once 'app/models/Product.php';
 
-class Controller_Core_Front
+class Controller_Core_Base
 {
     protected $request = null;
 
@@ -40,5 +40,17 @@ class Controller_Core_Front
         header("Location: index.php?a=$a&c=$c");
     }
 
+    public function renderTemplate($template, $data = [])
+    {
+        extract($data);
+        
+        $templatePath = 'app/templates/' . $template;
+
+        if (!file_exists($templatePath)) {
+            die("Template not found: " . $templatePath);
+        }
+
+        include $templatePath;
+    }
 
 }
