@@ -134,17 +134,22 @@ class Model_Core_Table
     {
         $primaryKey = $this->getPrimaryKey();
         if (!empty($this->data[$primaryKey])) {
+            $this->data['updated_date'] = date('Y-m-d H:i:s');
             return $this->update();
         }
+        $this->data['created_date'] = date('Y-m-d H:i:s');
         return $this->insert();
     }
 
     // Delete a record by primary key
-    public function delete($id)
+    public function delete()
     {
         $table = $this->getTableName();
         $primaryKey = $this->getPrimaryKey();
-        $id = $this->getAdapter()->escape($id);
+        if(empty($this->data[$primaryKey])){
+            return false;
+        }
+        $id = $this->getAdapter()->escape($this->data[$primaryKey]);
         $sql = "DELETE FROM `$table` WHERE `$primaryKey` = '$id'";
         return $this->getAdapter()->delete($sql);
     }

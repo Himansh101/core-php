@@ -47,7 +47,8 @@ class Controller_Category extends Controller_Core_Base
 
         if ($id) {
             $model = new Model_Category();
-            $model->delete($id);
+            $model->load($id);
+            $model->delete();
         }
 
         $this->redirect('list', 'category');
