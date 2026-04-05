@@ -20,10 +20,8 @@ class Controller_Productmedia extends Controller_Core_Base
         $id = $this->getRequest()->get('id');
 
         if ($id) {
-            $result = $model->load($id);
-
-            if (!$result) {
-                throw new Exception("Record not found.");
+            if (!$model->load($id)) {
+                throw new Exception("Invalid ID: Record does not exist.");
             }
         }
 
@@ -31,7 +29,7 @@ class Controller_Productmedia extends Controller_Core_Base
             'data' => $model
         ]);
     }
-
+    
     public function saveAction()
     {
         $data = $_POST['productmedia'] ?? [];

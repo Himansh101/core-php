@@ -1,0 +1,58 @@
+<?php
+require_once 'app/controllers/Core/Base.php';
+require_once 'app/models/Customergroup.php';
+
+class Controller_Customergroup extends Controller_Core_Base
+{
+    public function listAction()
+    {
+        $model = new Model_Customergroup();
+        $data = $model->fetchAll();
+
+        $this->renderTemplate('customergroup/list.phtml', [
+            'data' => $data
+        ]);
+    }
+
+    public function editAction()
+    {
+        $model = new Model_Customergroup();
+        $id = $this->getRequest()->get('id');
+
+        if ($id) {
+            if (!$model->load($id)) {
+                throw new Exception("Invalid ID: Record does not exist.");
+            }
+        }
+
+        $this->renderTemplate('customergroup/edit.phtml', [
+            'data' => $model
+        ]);
+    }
+
+    public function saveAction()
+    {
+        $model = new Model_Customergroup();
+
+        foreach ($_POST['customergroup'] as $key => $value) {
+            $model->$key = $value;
+        }
+
+        $model->save();
+
+        $this->redirect('list', 'customergroup');
+    }
+
+    public function deleteAction()
+    {
+        $id = $this->getRequest()->get('id');
+
+        if ($id) {
+            $model = new Model_Product();
+            $model->load($id);
+            $model->delete();    
+        }
+
+        $this->redirect('list', 'customergroup');
+    }
+}
